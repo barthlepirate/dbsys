@@ -108,7 +108,7 @@ public class TupleDesc implements Serializable {
      */
     public String getFieldName(int i) throws NoSuchElementException {
         // some code goes here
-        return tditems.get(i).fieldName
+        return tditems.get(i).fieldName;
     }
 
     /**
@@ -228,11 +228,11 @@ public class TupleDesc implements Serializable {
     public String toString() {
         // some code goes here
         String a = "";
-        for (int i = 0; i<numFields(),i++){ 
+        for (int i = 0; i<numFields();i++){ 
             if (i != 0)
     			a.concat(",");
 			a.concat(tditems.get(i).toString());
         }
-        return a
+        return a;
     }
 }
