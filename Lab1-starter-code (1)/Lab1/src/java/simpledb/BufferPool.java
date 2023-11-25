@@ -25,6 +25,8 @@ public class BufferPool {
     other classes. BufferPool should use the numPages argument to the
     constructor instead. */
     public static final int DEFAULT_PAGES = 50;
+    private final int numPages;
+    private final ConcurrentHashMap<PageId, Page> pageMap;
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -33,6 +35,8 @@ public class BufferPool {
      */
     public BufferPool(int numPages) {
         // some code goes here
+        this.numPages = numPages;
+        this.pageMap = new ConcurrentHashMap<>();
     }
     
     public static int getPageSize() {
@@ -67,7 +71,24 @@ public class BufferPool {
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
         // some code goes here
-        return null;
+        // Check if the page is already in the buffer pool
+        Page page = pageMap.get(pid);
+        if (page != null) {
+            return page;
+        }
+        // If the buffer pool is full, you might need to implement an eviction policy here.
+        // Since the lab specifies not to implement eviction in this part, we will skip this.
+        // In a full implementation, you would handle the case where pageMap.size() >= numPages.
+        
+        // Load the page from the corresponding file
+        int tableId = pid.getTableId();
+        DbFile file = Database.getCatalog().getDatabaseFile(tableId);
+        page = file.readPage(pid);
+
+        // Add the page to the buffer pool
+        pageMap.put(pid, page);
+
+        return page;
     }
 
     /**
