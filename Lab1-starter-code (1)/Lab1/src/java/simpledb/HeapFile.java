@@ -15,6 +15,16 @@ import java.util.*;
  */
 public class HeapFile implements DbFile {
 
+
+        // The file on the disk that stores the data for this database table.
+
+    private final File file;
+
+        // The schema of the tuples within this file.
+
+    private final TupleDesc td;
+
+
     /**
      * Constructs a heap file backed by the specified file.
      * 
@@ -24,6 +34,8 @@ public class HeapFile implements DbFile {
      */
     public HeapFile(File f, TupleDesc td) {
         // some code goes here
+        this.file = f;
+        this.td = td;
     }
 
     /**
@@ -33,10 +45,10 @@ public class HeapFile implements DbFile {
      */
     public File getFile() {
         // some code goes here
-        return null;
+        return file;
     }
 
-    /**
+        /**
      * Returns an ID uniquely identifying this HeapFile. Implementation note:
      * you will need to generate this tableid somewhere to ensure that each
      * HeapFile has a "unique id," and that you always return the same value for
@@ -47,7 +59,9 @@ public class HeapFile implements DbFile {
      */
     public int getId() {
         // some code goes here
-        throw new UnsupportedOperationException("implement this");
+        // The hash code of the file path ensures uniqueness.
+
+        return file.getAbsoluteFile().hashCode();
     }
 
     /**
@@ -57,12 +71,23 @@ public class HeapFile implements DbFile {
      */
     public TupleDesc getTupleDesc() {
         // some code goes here
-        throw new UnsupportedOperationException("implement this");
+        return td;
     }
 
-    // see DbFile.java for javadocs
+        // see DbFile.java for javadocs
     public Page readPage(PageId pid) {
-        // some code goes here
+        try {
+            RandomAccessFile raf = new RandomAccessFile(file, "r");
+            int pageSize = BufferPool.getPageSize();
+            byte[] data = new byte[pageSize];
+            long offset = (long) pid.pageNumber() * pageSize;
+            raf.seek(offset);
+            raf.readFully(data);
+            raf.close();
+            return new HeapPage((HeapPageId) pid, data);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
@@ -77,7 +102,9 @@ public class HeapFile implements DbFile {
      */
     public int numPages() {
         // some code goes here
-        return 0;
+        long fileSize = file.length();
+        int pageSize = BufferPool.getPageSize();
+        return (int) Math.ceil((double) fileSize / pageSize)
     }
 
     // see DbFile.java for javadocs
@@ -96,11 +123,83 @@ public class HeapFile implements DbFile {
         // not necessary for lab1
     }
 
-    // see DbFile.java for javadocs
+        // see DbFile.java for javadocs
     public DbFileIterator iterator(TransactionId tid) {
-        // some code goes here
-        return null;
+        return new DbFileIterator() {
+            // Current page index to keep track of the iterator's position.
+            private int currentPageIndex = 0;
+            // Iterator over tuples in the current page.
+            private Iterator<Tuple> currentIterator = null;
+
+            /**
+             * Opens the iterator, initializing the state for iteration.
+             */
+            public void open() throws DbException, TransactionAbortedException {
+                currentPageIndex = 0;
+                currentIterator = getIteratorForPage();
+            }
+
+            /**
+             * Checks if there are more tuples to iterate over.
+             * @return true if there are more tuples, false otherwise.
+             */
+            public boolean hasNext() throws DbException, TransactionAbortedException {
+                if (currentIterator == null) {
+                    return false;
+                }
+                if (!currentIterator.hasNext() && currentPageIndex < numPages() - 1) {
+                    currentPageIndex++; // Move to the next page.
+                    currentIterator = getIteratorForPage(); // Update iterator for new page.
+                    return hasNext(); // Check again for the new page.
+                }
+                return currentIterator.hasNext(); // Return true if current page has more tuples.
+            }
+
+            /**
+             * Retrieves the next tuple from the iterator.
+             * @return the next tuple in the iteration.
+             * @throws NoSuchElementException if there are no more tuples.
+             */
+            public Tuple next() throws DbException, TransactionAbortedException, NoSuchElementException {
+                if (currentIterator == null || !currentIterator.hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                return currentIterator.next();
+            }
+
+            /**
+             * Resets the iterator to the start of the file.
+             */
+            public void rewind() throws DbException, TransactionAbortedException {
+                close();
+                open();
+            }
+
+            /**
+             * Closes the iterator, resetting its state.
+             */
+            public void close() {
+                currentIterator = null;
+            }
+
+            /**
+             * Private helper method to get the tuple iterator for the current page.
+             * @return an iterator over tuples in the current page.
+             */
+            private Iterator<Tuple> getIteratorForPage() throws TransactionAbortedException, DbException {
+                if (currentPageIndex >= numPages()) {
+                    throw new NoSuchElementException("No more pages in file.");
+                }
+                // Constructing the PageId for the current page.
+                PageId pageId = new HeapPageId(getId(), currentPageIndex);
+                // Fetching the page from the BufferPool.
+                HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, pageId, Permissions.READ_ONLY);
+                // Returning the iterator for the fetched page.
+                return page.iterator();
+            }
+        };
     }
+
 
 }
 
