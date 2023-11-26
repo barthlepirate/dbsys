@@ -80,7 +80,7 @@ public class HeapFile implements DbFile {
             RandomAccessFile raf = new RandomAccessFile(file, "r");
             int pageSize = BufferPool.getPageSize();
             byte[] data = new byte[pageSize];
-            long offset = (long) pid.pageNumber() * pageSize;
+            long offset = (long) pid.getPageNumber() * pageSize;
             raf.seek(offset);
             raf.readFully(data);
             raf.close();
@@ -104,7 +104,7 @@ public class HeapFile implements DbFile {
         // some code goes here
         long fileSize = file.length();
         int pageSize = BufferPool.getPageSize();
-        return (int) Math.ceil((double) fileSize / pageSize)
+        return (int) Math.ceil((double) fileSize / pageSize);
     }
 
     // see DbFile.java for javadocs

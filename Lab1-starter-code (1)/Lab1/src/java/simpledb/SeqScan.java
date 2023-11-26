@@ -27,21 +27,18 @@ public class SeqScan implements OpIterator {
      *            are, but the resulting name can be null.fieldName,
      *            tableAlias.null, or null.null).
      */
-
-    private String tableAlias;
-    private int tableid;
     private TransactionId tid;
+    private int tableid;
+    private String tableAlias;
     private TupleDesc td;
-    private Iterator<Tuple> iterator;
+    private DbFileIterator iterator;
 
-    
     public SeqScan(TransactionId tid, int tableid, String tableAlias) {
+        // some code goes here
         this.tid = tid;
         this.tableid = tableid;
         this.tableAlias = tableAlias;
-        this.td = Database.getCatalog().getTupleDesc(tableid);
-        this.iterator = Database.getCatalog().getDatabaseFile(tableid).iterator(tid);
-    }   
+    }
 
     /**
      * @return
@@ -57,6 +54,7 @@ public class SeqScan implements OpIterator {
      * */
     public String getAlias()
     {
+        // some code goes here
         return tableAlias;
     }
 
@@ -73,7 +71,14 @@ public class SeqScan implements OpIterator {
      *            tableAlias.null, or null.null).
      */
     public void reset(int tableid, String tableAlias) {
-        this.tableAlias = null; this.tableid = 0;
+        // some code goes here
+        this.tableid = tableid;
+        this.tableAlias = tableAlias;
+        this.td = null;
+        if (this.iterator != null) {
+            this.iterator.close();
+            this.iterator = null;
+        }
     }
 
     public SeqScan(TransactionId tid, int tableId) {
@@ -81,11 +86,12 @@ public class SeqScan implements OpIterator {
     }
 
     public void open() throws DbException, TransactionAbortedException {
-        // Vérifiez si l'iterator est déjà ouvert
-        if (iterator == null) {
-            throw new DbException("Iterator not initialized");
+        // some code goes here
+        this.td = Database.getCatalog().getTupleDesc(tableid);
+        DbFile file = Database.getCatalog().getDatabaseFile(tableid);
+        this.iterator = file.iterator(tid);
+        this.iterator.open();
     }
-    }    
 
     /**
      * Returns the TupleDesc with field names from the underlying HeapFile,
@@ -98,39 +104,48 @@ public class SeqScan implements OpIterator {
      *         prefixed with the tableAlias string from the constructor.
      */
     public TupleDesc getTupleDesc() {
-        TupleDesc originalTd = Database.getCatalog().getTupleDesc(tableid);
-        int numFields = originalTd.numFields();
-        Type[] fieldTypes = new Type[numFields];
-        String[] fieldNames = new String[numFields];
+        // some code goes here
+        TupleDesc origTd = Database.getCatalog().getTupleDesc(tableid);
+        int numFields = origTd.numFields();
+        Type[] types = new Type[numFields];
+        String[] names = new String[numFields];
+
         for (int i = 0; i < numFields; i++) {
-            fieldTypes[i] = originalTd.getFieldType(i);
-            fieldNames[i] = tableAlias + "." + originalTd.getFieldName(i);
+            types[i] = origTd.getFieldType(i);
+            String prefix = (tableAlias == null) ? "null" : tableAlias;
+            String suffix = (origTd.getFieldName(i) == null) ? "null" : origTd.getFieldName(i);
+            names[i] = prefix + "." + suffix;
         }
-        return new TupleDesc(fieldTypes, fieldNames);
+        return new TupleDesc(types, names);
     }
 
     public boolean hasNext() throws TransactionAbortedException, DbException {
+         if (iterator == null) {
+            return false;
+        }
         return iterator.hasNext();
     }
 
-    public Tuple next() throws NoSuchElementException, TransactionAbortedException, DbException {
-        if (hasNext()) {
-            return iterator.next();
-        } else {
-            throw new NoSuchElementException("No more tuples in SeqScan");
+    public Tuple next() throws NoSuchElementException,
+            TransactionAbortedException, DbException {
+        if (iterator == null || !iterator.hasNext()) {
+            throw new NoSuchElementException("SeqScan: No more tuples");
         }
+        return iterator.next();
     }
 
     public void close() {
-        iterator = null; 
+        // some code goes here
+        if (iterator != null) {
+            iterator.close();
+        }
+        iterator = null;
     }
 
-    public void rewind() throws DbException, NoSuchElementException, TransactionAbortedException {
-        if (iterator != null) {
-            iterator.close(); 
-            iterator = Database.getCatalog().getDatabaseFile(tableid).iterator(tid); // Obtenir un nouvel itérateur
-        } else {
-            throw new DbException("Iterator is null. Cannot rewind.");
-        }
+    public void rewind() throws DbException, NoSuchElementException,
+            TransactionAbortedException {
+        // some code goes here
+        close();
+        open();
     }
 }

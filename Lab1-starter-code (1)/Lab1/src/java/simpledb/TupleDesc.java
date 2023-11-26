@@ -64,7 +64,7 @@ public class TupleDesc implements Serializable {
         // some code goes here
         tditems = new ArrayList<TupleDesc.TDItem>();
         for (int i = 0 ; i< typeAr.length; i++ ){
-            TDItem tmpitem = new TDItem(typeA[i],fieldAr[i]);
+            TDItem tmpitem = new TDItem(typeAr[i] ,fieldAr[i]);
             tditems.add(tmpitem);
         }
 
@@ -82,7 +82,7 @@ public class TupleDesc implements Serializable {
     public TupleDesc(Type[] typeAr) {
         // some code goes here
         tditems = new ArrayList<TupleDesc.TDItem>();
-        for ( int i = 0 ; i< typeAr.lenght; i++){
+        for ( int i = 0 ; i< typeAr.length; i++){
             TDItem tmpitem = new TDItem(typeAr[i],"");
             tditems.add(tmpitem);
         }
@@ -137,8 +137,8 @@ public class TupleDesc implements Serializable {
      */
     public int fieldNameToIndex(String name) throws NoSuchElementException {
 
-        for (int i = 0; i < tdItems.size(); i++) {
-            TDItem item = tdItems.get(i);
+        for (int i = 0; i < tditems.size(); i++) {
+            TDItem item = tditems.get(i);
             if (name.equals(item.fieldName)) {
                 return i;
             }
