@@ -34,7 +34,7 @@ public class SeqScan implements OpIterator {
     private DbFileIterator iterator;
 
     public SeqScan(TransactionId tid, int tableid, String tableAlias) {
-        // some code goes here
+        // Initialize the SeqScan with the specified TransactionId, table ID, and table alias.
         this.tid = tid;
         this.tableid = tableid;
         this.tableAlias = tableAlias;
@@ -54,7 +54,6 @@ public class SeqScan implements OpIterator {
      * */
     public String getAlias()
     {
-        // some code goes here
         return tableAlias;
     }
 
@@ -71,7 +70,6 @@ public class SeqScan implements OpIterator {
      *            tableAlias.null, or null.null).
      */
     public void reset(int tableid, String tableAlias) {
-        // some code goes here
         this.tableid = tableid;
         this.tableAlias = tableAlias;
         this.td = null;
@@ -86,7 +84,6 @@ public class SeqScan implements OpIterator {
     }
 
     public void open() throws DbException, TransactionAbortedException {
-        // some code goes here
         this.td = Database.getCatalog().getTupleDesc(tableid);
         DbFile file = Database.getCatalog().getDatabaseFile(tableid);
         this.iterator = file.iterator(tid);
@@ -104,7 +101,6 @@ public class SeqScan implements OpIterator {
      *         prefixed with the tableAlias string from the constructor.
      */
     public TupleDesc getTupleDesc() {
-        // some code goes here
         TupleDesc origTd = Database.getCatalog().getTupleDesc(tableid);
         int numFields = origTd.numFields();
         Type[] types = new Type[numFields];
@@ -135,7 +131,6 @@ public class SeqScan implements OpIterator {
     }
 
     public void close() {
-        // some code goes here
         if (iterator != null) {
             iterator.close();
         }
@@ -144,7 +139,6 @@ public class SeqScan implements OpIterator {
 
     public void rewind() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        // some code goes here
         close();
         open();
     }
