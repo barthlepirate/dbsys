@@ -55,6 +55,7 @@ public class Predicate implements Serializable {
      *            field value to compare passed in tuples to
      */
 
+    //  We create the private variables following:
     private int field;
     private Op op;
     private Field operand;
