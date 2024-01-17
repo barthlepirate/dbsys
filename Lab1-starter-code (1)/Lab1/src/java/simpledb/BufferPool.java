@@ -4,6 +4,10 @@ import java.io.*;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+
+import java.util.List;
+import java.util.ArrayList;
+
 /**
  * BufferPool manages the reading and writing of pages into memory from
  * disk. Access methods call into it to retrieve pages, and it fetches
@@ -150,12 +154,36 @@ public class BufferPool {
      * @param tableId the table to add the tuple to
      * @param t the tuple to add
      */
+    // public void insertTuple(TransactionId tid, int tableId, Tuple t)
+    //     throws DbException, IOException, TransactionAbortedException {
+    //     // some code goes here
+    //     // not necessary for lab1
+    //     // Retrieve the heap file
+    //     // HeapFile file = (HeapFile) Database.getCatalog().getDatabaseFile(tableId);
+    //     // // Insert the tuple
+    //     // List<Page> affectedPages = file.insertTuple(tid, t);
+    //     // // Mark affected pages as dirty and put them back into the buffer pool
+    //     // for (Page page : affectedPages) {
+    //     //     page.markDirty(true, tid);
+    //     //     pageMap.put(page.getId(), page);
+    //     // }
+    // }
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
-        throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for lab1
-    }
+            throws DbException, IOException, TransactionAbortedException {
+            // some code goes here
+            // not necessary for lab1
+            //Retrieve the heap file
+            // HeapFile file = (HeapFile) Database.getCatalog().getDatabaseFile(tableId);
 
+            //Insert the tuple
+            ArrayList<Page> pages = Database.getCatalog().getDatabaseFile(tableId).insertTuple(tid, t);
+            //Mark any pages that were dirtied by the operation as dirty
+            for(Page p: pages) {
+            	p.markDirty(true, tid);
+            	//Add versions of any pages that have been dirtied to the cache
+            	pageMap.put(p.getId(), p);
+            }
+        }
     /**
      * Remove the specified tuple from the buffer pool.
      * Will acquire a write lock on the page the tuple is removed from and any
@@ -169,11 +197,35 @@ public class BufferPool {
      * @param tid the transaction deleting the tuple.
      * @param t the tuple to delete
      */
-    public  void deleteTuple(TransactionId tid, Tuple t)
-        throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for lab1
-    }
+    // public  void deleteTuple(TransactionId tid, Tuple t)
+    //     throws DbException, IOException, TransactionAbortedException {
+    //     // some code goes here
+    //     // not necessary for lab1
+    //     // Retrieve the heap file
+    //     HeapFile file = (HeapFile) Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId());
+    //     // Delete the tuple
+    //     List<Page> affectedPages = file.deleteTuple(tid, t);
+    //     // Mark affected pages as dirty and put them back into the buffer pool
+    //     for (Page page : affectedPages) {
+    //         page.markDirty(true, tid);
+    //         pageMap.put(page.getId(), page);
+    //     }
+    // }
+    public void deleteTuple(TransactionId tid, Tuple t)
+            throws DbException, IOException, TransactionAbortedException {
+            // some code goes here
+            // not necessary for lab1
+            //Retrieve the heap file
+            HeapFile file = (HeapFile) Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId());
+            //Delete the tuple
+            ArrayList<Page> pages =  Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId()).deleteTuple(tid, t);
+            //Mark any pages that were dirtied by the operation as dirty
+            for(Page p: pages) {
+            	p.markDirty(true, tid);
+            	//Add versions of any pages that have been dirtied to the cache
+            	pageMap.put(p.getId(), p);
+            }
+        }
 
     /**
      * Flush all dirty pages to disk.
@@ -183,6 +235,12 @@ public class BufferPool {
     public synchronized void flushAllPages() throws IOException {
         // some code goes here
         // not necessary for lab1
+        for (PageId pid : pageMap.keySet()) {
+            flushPage(pid);
+        }
+
+
+
 
     }
 
@@ -197,23 +255,32 @@ public class BufferPool {
     public synchronized void discardPage(PageId pid) {
         // some code goes here
         // not necessary for lab1
+        pageMap.remove(pid);
+
     }
 
     /**
      * Flushes a certain page to disk
      * @param pid an ID indicating the page to flush
      */
-    private synchronized  void flushPage(PageId pid) throws IOException {
-        // some code goes here
-        // not necessary for lab1
+    private synchronized void flushPage(PageId pid) throws IOException {
+        Page page = pageMap.get(pid);
+        if (page.isDirty() != null) {
+            DbFile file = Database.getCatalog().getDatabaseFile(pid.getTableId());
+            file.writePage(page);
+            page.markDirty(false, null);
+        }
     }
+
 
     /** Write all pages of the specified transaction to disk.
      */
     public synchronized  void flushPages(TransactionId tid) throws IOException {
         // some code goes here
         // not necessary for lab1|lab2
+       
     }
+
 
     /**
      * Discards a page from the buffer pool.
@@ -222,6 +289,35 @@ public class BufferPool {
     private synchronized  void evictPage() throws DbException {
         // some code goes here
         // not necessary for lab1
+        // Eviction policy implemented: Random
+    	List<PageId> keysAsArray = new ArrayList<PageId>(this.pageMap.keySet());
+    	int size = keysAsArray.size();
+    	int item = (int) (Math.random() * size); // random number between 0 and size
+    	PageId pid = keysAsArray.get(item);
+    	
+    	// flush the chosen page
+    	try {
+			flushPage(pid);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
+    	// remove the page from the bufferpool
+    	this.pageMap.remove(pid);
+
     }
+
+    // private synchronized void evictPage() throws DbException {
+    //     for (PageId pid : pageMap.keySet()) {
+    //         Page page = pageMap.get(pid);
+    //         if (page.isDirty() == null) {
+    //             pageMap.remove(pid);
+    //             return;
+    //         }
+    //     }
+    //     throw new DbException("All pages are dirty; cannot evict");
+    // }
+
 
 }
