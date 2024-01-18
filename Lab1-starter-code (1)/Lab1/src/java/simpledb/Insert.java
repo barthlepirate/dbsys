@@ -14,7 +14,7 @@ public class Insert extends Operator {
     private TupleDesc td;
     private int tableId;
     private TransactionId tid;
-    private int num_ins_rec; 
+    private int num_ins_rec;
     private boolean retrieved;
 
     /**
@@ -32,35 +32,28 @@ public class Insert extends Operator {
      */
     public Insert(TransactionId t, OpIterator child, int tableId)
             throws DbException {
-        // some code goes here
         this.tableId = tableId;
         this.tid = t;
         this.child = child;
-        
         this.child_td = child.getTupleDesc();
-        
         TupleDesc table_td = Database.getCatalog().getTupleDesc(tableId);
-        
+        // Check if the TupleDesc of the child matches the table
         if (!table_td.equals(child_td)) {
-            throw new DbException("Mismatched TupleDesc: Child does not match the table"); // verify if it matchs
+            throw new DbException("Does not match");
         }
-    
-        Type[] typeArray = new Type[] {Type.INT_TYPE};
-        td = new TupleDesc(typeArray); 
+        Type[] typeArray = new Type[]{Type.INT_TYPE};
+        td = new TupleDesc(typeArray);
         this.retrieved = false;
-        }        
-    
+    }
 
     public TupleDesc getTupleDesc() {
-        // some code goes here
         return this.td;
     }
 
     public void open() throws DbException, TransactionAbortedException {
-        //some code goes here
         child.open();
         super.open();
-    
+        // Iterate through child tuples and insert them 
         while (child.hasNext()) {
             Tuple nextTuple = child.next();
             try {
@@ -68,27 +61,25 @@ public class Insert extends Operator {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-    
+
             this.num_ins_rec++;
         }
     }
 
     public void close() {
-        // some code goes here
-    	child.close();
-    	super.close();
+        child.close();
+        super.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        // some code goes here
-    	child.rewind();
+        child.rewind();
     }
 
     /**
      * Inserts tuples read from child into the tableId specified by the
      * constructor. It returns a one field tuple containing the number of
      * inserted records. Inserts should be passed through BufferPool. An
-     * instances of BufferPool is available via Database.getBufferPool(). Note
+     * instance of BufferPool is available via Database.getBufferPool(). Note
      * that insert DOES NOT need check to see if a particular tuple is a
      * duplicate before inserting it.
      *
@@ -98,29 +89,27 @@ public class Insert extends Operator {
      * @see BufferPool#insertTuple
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        // some code goes here
-    	Tuple num_rec_t = null;
-    	if (!retrieved) {
-	    	num_rec_t = new Tuple(this.td);	    	
-	    	num_rec_t.setField(0, new IntField(this.num_ins_rec));
-	    	retrieved = true;
-    	} 
-    	
+        // Fetch the next tuple containing the number of inserted records
+        Tuple num_rec_t = null;
+        if (!retrieved) {
+            num_rec_t = new Tuple(this.td);
+            num_rec_t.setField(0, new IntField(this.num_ins_rec));
+            retrieved = true;
+        }
+
         return num_rec_t;
     }
 
     @Override
     public OpIterator[] getChildren() {
-        // some code goes here
-        return new OpIterator[] { this.child };
+        return new OpIterator[]{this.child};
     }
 
     @Override
     public void setChildren(OpIterator[] children) {
-        // some code goes here
-    	if (this.child!=children[0])
-    	{
-    	    this.child = children[0];
-    	}
+        // Set to the good child
+        if (this.child != children[0]) {
+            this.child = children[0];
+        }
     }
 }
