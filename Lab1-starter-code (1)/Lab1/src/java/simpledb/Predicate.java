@@ -76,25 +76,19 @@ public class Predicate implements Serializable {
     	this.operand = operand;
     }
 
-    /**
-     * @return the field number
-     */
+
     public int getField()
     {
         return field;
     }
 
-    /**
-     * @return the operator
-     */
+
     public Op getOp()
     {
         return op;
     }
     
-    /**
-     * @return the operand
-     */
+
     public Field getOperand()
     {
         return operand;
@@ -114,10 +108,7 @@ public class Predicate implements Serializable {
         return t.getField(field).compare(op, operand);
     }
 
-    /**
-     * Returns something useful, like "f = field_id op = op_string operand =
-     * operand_string"
-     */
+
     public String toString() {
         return "f = " + field + " | op = " + op.toString() + " | operand = " + operand.toString();
     }
