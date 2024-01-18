@@ -10,39 +10,35 @@ public class Delete extends Operator {
 
     private static final long serialVersionUID = 1L;
 
-    private OpIterator child;
-    private TupleDesc td;
-    private TransactionId tid;
-    private int num_del_rec; 
-    private boolean retrieved;
+    private OpIterator child; // Child operator to read tuples for deletion
+    private TupleDesc td; // Tuple descriptor for the result tuple
+    private TransactionId tid; // Transaction ID associated with this delete operation
+    private int num_del_rec; // Number of deleted records
+    private boolean retrieved; // Flag to track whether the result tuple has been retrieved
 
     /**
      * Constructor specifying the transaction that this delete belongs to as
      * well as the child to read from.
      * 
-     * @param t
-     *            The transaction this delete runs in
-     * @param child
-     *            The child operator from which to read tuples for deletion
+     * @param transactionId The transaction this delete runs in.
+     * @param child The child operator from which to read tuples for deletion.
      */
-
     public Delete(TransactionId transactionId, OpIterator child) {
         this.tid = transactionId;
         this.child = child;
         Type[] typeArray = new Type[]{Type.INT_TYPE};
+        // Creating a 1-field tuple descriptor
         td = new TupleDesc(typeArray); 
         this.retrieved = false;
     }
     
-
     public TupleDesc getTupleDesc() {
-        // some code goes here
         return this.td;
     }
 
     public void open() throws DbException, TransactionAbortedException {
+        //read tuples, deleted them & count the number of deleted records
         child.open();
-    
         while (child.hasNext()) {
             Tuple nextTuple = child.next();
     
@@ -51,31 +47,27 @@ public class Delete extends Operator {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-    
             this.num_del_rec++;
         }
     }    
 
     public void close() {
-        // some code goes here
         child.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        // some code goes here
         child.rewind();
     }
 
     /**
-     * Deletes tuples as they are read from the child operator. Deletes are
-     * processed via the buffer pool (which can be accessed via the
-     * Database.getBufferPool() method.
+     * Deletes tuples as they are read from the child operator.
+     * Deletes are processed via the buffer pool (which can be accessed via the
+     * Database.getBufferPool() method).
      * 
      * @return A 1-field tuple containing the number of deleted records.
      * @see Database#getBufferPool
      * @see BufferPool#deleteTuple
      */
-
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         Tuple resultTuple = null;
         if (!retrieved) {
@@ -97,5 +89,4 @@ public class Delete extends Operator {
             this.child = children[0];
         }
     }    
-
 }
