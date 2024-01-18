@@ -26,17 +26,17 @@ public class JoinPredicate implements Serializable {
      */
 
     //  We create the private variables following:
-    private int field1;
-    private int field2;
-    private Predicate.Op op;
+    private int field1; // Field index into the first tuple
+    private int field2; // Field index into the second tuple
+    private Predicate.Op op; // Operation to apply for comparison
 
 
     public JoinPredicate(int field1, Predicate.Op op, int field2) {
-        // some code goes here
         this.field1 = field1;
-    	this.field2 = field2;
-    	this.op = op;
+        this.field2 = field2;
+        this.op = op;
     }
+
     /**
      * Apply the predicate to the two specified tuples. The comparison can be
      * made through Field's compare method.
@@ -44,25 +44,21 @@ public class JoinPredicate implements Serializable {
      * @return true if the tuples satisfy the predicate.
      */
     public boolean filter(Tuple t1, Tuple t2) {
-        // some code goes here
         return t1.getField(field1).compare(op, t2.getField(field2));
     }
     
-    public int getField1()
-    {
-        // some code goes here
+
+    public int getField1() {
         return field1;
     }
     
-    public int getField2()
-    {
-        // some code goes here
+
+    public int getField2() {
         return field2;
     }
     
-    public Predicate.Op getOperator()
-    {
-        // some code goes here
+
+    public Predicate.Op getOperator() {
         return op;
     }
 }
