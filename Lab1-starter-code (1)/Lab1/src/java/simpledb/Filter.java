@@ -9,11 +9,9 @@ public class Filter extends Operator {
 
     private static final long serialVersionUID = 1L;
 
-
     // Adding some private variables
-
-    private final Predicate predicate;
-    private OpIterator child;
+    private final Predicate predicate; // The predicate to filter tuples with
+    private OpIterator child; // The child operator
 
     /**
      * Constructor accepts a predicate to apply and a child operator to read
@@ -25,36 +23,30 @@ public class Filter extends Operator {
      *            The child operator
      */
     public Filter(Predicate p, OpIterator child) {
-        // some code goes here
         this.predicate = p;
         this.child = child;
     }
 
     public Predicate getPredicate() {
-        // some code goes here
         return predicate;
     }
 
     public TupleDesc getTupleDesc() {
-        // some code goes here
         return child.getTupleDesc();
     }
 
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        // some code goes here
         super.open();
         child.open();
     }
 
     public void close() {
-        // some code goes here
         super.close();
         child.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        // some code goes here
         child.rewind();
     }
 
@@ -69,32 +61,28 @@ public class Filter extends Operator {
      */
     protected Tuple fetchNext() throws NoSuchElementException,
             TransactionAbortedException, DbException {
-        // some code goes here
-         while (child.hasNext()) {
-        Tuple tuple = child.next();
-        if (predicate.filter(tuple)) {
-            return tuple;
-                    }
-       
-                }
-                 return null;
+        // Iterate over tuples from the child operator
+        while (child.hasNext()) {
+            Tuple tuple = child.next();
+            // Apply the predicate to the tuple and return if it passes the filter
+            if (predicate.filter(tuple)) {
+                return tuple;
             }
+        }
+        return null;
+    }
 
     @Override
     public OpIterator[] getChildren() {
-        // some code goes here
         return new OpIterator[]{child};
-
     }
 
     @Override
     public void setChildren(OpIterator[] children) {
-        // some code goes here
-         if (children.length == 1) {
-       child = children[0];
-    } else {
-        throw new IllegalArgumentException("Expected only one child OpIterator.");
+        if (children.length == 1) {
+            child = children[0];
+        } else {
+            throw new IllegalArgumentException("Expected only one child OpIterator.");
+        }
     }
-    }
-
 }
